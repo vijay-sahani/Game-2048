@@ -49,7 +49,6 @@ class Game2048:
         direction = MOVE_DIRECTIONS.get(move_direction)
         if(direction != None):
             if(direction == 'R'):
-                # print("latest version")
                 self.on_direction_left(board)
             elif(direction == 'L'):
                 self.on_direction_right(board)
@@ -80,7 +79,7 @@ class Game2048:
     def on_direction_left_v2(self, board: list[list[Spot]]):
         for i in range(self.rows):
             stack: list = []
-            for j in range(self.rows):
+            for j in range(self.rows-1, -1, -1):
                 if(board[i][j].is_Empty()):
                     continue
                 num = int(board[i][j].number)
@@ -165,18 +164,30 @@ class Game2048:
             return
         spot = random.choice(available_spots)
         spot.number = str(num)
+        available_spots.remove(spot)
+        self.no_spots = len(available_spots) == 0
         self.print_grid(board)
 
-    def is_feasible_move(self) -> bool:
+    def is_feasible_move(self, board) -> bool:
         """Checks if their is any possible move the board when the board is full
-        ** Not Implemented yet **
         Returns:
             bool: false if not possible moves can be made 
         """
+        return self.find_feasible(board)
+
+    def find_feasible(self, board: list[list[Spot]]):
+        for row in range(len(board)):
+            for col in range(len(board[row])):
+                if(row > 0 and row < len(board)-1):
+                    if(board[row-1][col].number == board[row][col].number or board[row+1][col].number == board[row][col].number):
+                        return True
+                if(col > 0 and col < len(board[row])-1):
+                    if (board[row][col - 1].number == board[row][col].number or board[row][col + 1].number == board[row][col].number):
+                        return True
         return False
 
-    def game_over(self) -> bool:
-        return self.no_spots and not self.is_feasible_move()
+    def game_over(self, board) -> bool:
+        return self.no_spots and not self.is_feasible_move(board)
 
     def print_grid(self, board: list[list[Spot]]):
         print("\033[H\033[J", end="")
