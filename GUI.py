@@ -7,7 +7,7 @@ from main import Game2048
 # pygame initialization
 pygame.init()
 pygame.font.init()
-
+pygame.display.set_caption("Classic 2048")
 # constants
 EXTRA_HEIGHT = 50
 WIDTH = 600
@@ -16,10 +16,10 @@ ROWS = 4
 TILE_SIZE = WIDTH//ROWS
 
 fnt = pygame.font.SysFont("comiscans", TILE_SIZE)
-RED = (255, 0, 0)
-GREEN = (0, 255, 0)
+
 WHITE = (255, 255, 255)
 GREY = (128, 128, 128)
+# GREY = (0, 0, 0)
 COLORS = {
     '2': (238, 228, 218),
     '4': (237, 224, 200),
@@ -41,7 +41,9 @@ def get_clicked_pos(pos, ROWS, width, height) -> tuple[int]:
     x, y = pos
     row = x // gap1
     col = y // gap2
-    return row, col
+    if col < 4 and col >= 0 and row < 4 and row >= 0:
+        return row, col
+    return None
 
 
 def make_grid(ROWS, width, height) -> list[list:Spot]:
@@ -134,8 +136,10 @@ def main(screen, width, height):
         draw(screen, grid, ROWS, width, height)
         piece, x, y = get_square_under_mouse(grid, width, height)
         for event in pygame.event.get():
-            if event.type == pygame.QUIT or game_util.game_over():
+            if event.type == pygame.QUIT or game_util.game_over(grid):
                 run = False
+                print("Game over")
+                break
             if event.type == pygame.VIDEORESIZE:
                 screen = pygame.display.set_mode(
                     (event.w, event.h), pygame.RESIZABLE)
@@ -159,7 +163,7 @@ def main(screen, width, height):
                 if event.type == pygame.MOUSEMOTION:
                     pos = pygame.mouse.get_pos()
                     current_pos = get_clicked_pos(pos, ROWS, width, height)
-                    if(current_pos[1] != 4 and selected_pos != current_pos):
+                    if(current_pos != None and selected_pos != current_pos):
                         game_util.update_board(grid, selected_pos, current_pos)
                         selected_pos = None
         if x != None and selected_pos != None:

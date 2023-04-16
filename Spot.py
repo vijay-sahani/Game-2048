@@ -1,7 +1,4 @@
-RED = (255, 0, 0)
-GREEN = (0, 255, 0)
-WHITE = (255, 255, 255)
-GREY = (128, 128, 128)
+DARK_GREY = (119, 110, 101)
 
 
 class Spot:
@@ -12,7 +9,7 @@ class Spot:
         self.y = col*height
         self.width = width
         self.height = height
-        self.color = WHITE
+        self.color = DARK_GREY
         self.total_rows = total_rows
         self.number: str = None
 
@@ -32,5 +29,5 @@ class Spot:
         self.number = number
 
     def reset(self) -> None:
-        self.color = WHITE
+        self.color = DARK_GREY
         self.number = None
