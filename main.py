@@ -49,7 +49,8 @@ class Game2048:
         direction = MOVE_DIRECTIONS.get(move_direction)
         if(direction != None):
             if(direction == 'R'):
-                self.on_direction_left(board)
+                print("latest left")
+                self.on_direction_left_v2(board)
             elif(direction == 'L'):
                 self.on_direction_right(board)
             elif(direction == 'D'):
@@ -82,19 +83,15 @@ class Game2048:
             for j in range(self.rows-1, -1, -1):
                 if(board[i][j].is_Empty()):
                     continue
-                num = int(board[i][j].number)
-                if(len(stack) == 0):
-                    stack.append(num)
-                elif(stack[len(stack)-1] == num):
-                    last_num = (stack.pop() << 1)
-                    self.update_score(last_num)
-                    stack.append(last_num)
-                else:
-                    stack.append(num)
+                stack.append(int(board[i][j].number))
                 board[i][j].reset()
             index = 0
             while stack and index < self.rows:
-                board[i][index].set_number(str(stack.pop()))
+                num: int = stack.pop()
+                if(stack and stack[len(stack)-1] == num):
+                    num = (stack.pop() << 1)
+                    self.update_score(num)
+                board[i][index].set_number(str(num))
                 index += 1
 
     def update_score(self, value) -> None:

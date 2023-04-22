@@ -1,6 +1,4 @@
-from numpy import array
 import pygame
-from pygame.constants import KEYDOWN, KEYUP, K_SPACE
 from Spot import Spot
 from main import Game2048
 
@@ -159,13 +157,12 @@ def main(screen, width, height):
                 except:
                     pass
 
-            elif(selected_pos):
-                if event.type == pygame.MOUSEMOTION:
-                    pos = pygame.mouse.get_pos()
-                    current_pos = get_clicked_pos(pos, ROWS, width, height)
-                    if(current_pos != None and selected_pos != current_pos):
-                        game_util.update_board(grid, selected_pos, current_pos)
-                        selected_pos = None
+            elif(selected_pos and event.type == pygame.MOUSEMOTION):
+                pos = pygame.mouse.get_pos()
+                current_pos = get_clicked_pos(pos, ROWS, width, height)
+                if(current_pos != None and selected_pos != current_pos):
+                    game_util.update_board(grid, selected_pos, current_pos)
+                    selected_pos = None
         if x != None and selected_pos != None:
             rect = (x * TILE1,
                     y * TILE2, TILE1, TILE2)
