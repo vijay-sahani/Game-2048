@@ -1,4 +1,5 @@
 import random
+
 from Spot import Spot
 
 MOVE_DIRECTIONS = {tuple([1, 0]): 'D', tuple(
@@ -36,7 +37,7 @@ class Game2048:
                     empty_spaces.append(spot)
         return empty_spaces
 
-    def update_board(self, board: list[list], previous: tuple[int], current: tuple[int]) -> None:
+    def update_board(self, board: list[list], previous: tuple[int], current: tuple[int], show_changes) -> None:
         """Updates the game view w.r.t the direction of move 
         Args:
             board (_type_): _description_
@@ -49,14 +50,13 @@ class Game2048:
         direction = MOVE_DIRECTIONS.get(move_direction)
         if(direction != None):
             if(direction == 'R'):
-                print("latest left")
-                self.on_direction_left_v2(board)
+                self.on_direction_left_v2(board, show_changes)
             elif(direction == 'L'):
-                self.on_direction_right(board)
+                self.on_direction_right(board, show_changes)
             elif(direction == 'D'):
-                self.on_direction_up(board)
+                self.on_direction_up(board, show_changes)
             elif(direction == 'U'):
-                self.on_direction_down(board)
+                self.on_direction_down(board, show_changes)
             self.make_random_move(board)
 
     def on_direction_left(self, board: list[list[Spot]]):
@@ -77,7 +77,7 @@ class Game2048:
                     self.score += int(board[row][col-1].number)
                     board[row][col].reset()
 
-    def on_direction_left_v2(self, board: list[list[Spot]]):
+    def on_direction_left_v2(self, board: list[list[Spot]], show_changes):
         for i in range(self.rows):
             stack: list = []
             for j in range(self.rows-1, -1, -1):
@@ -85,6 +85,7 @@ class Game2048:
                     continue
                 stack.append(int(board[i][j].number))
                 board[i][j].reset()
+                show_changes(board[i][j])
             index = 0
             while stack and index < self.rows:
                 num: int = stack.pop()
@@ -92,12 +93,13 @@ class Game2048:
                     num = (stack.pop() << 1)
                     self.update_score(num)
                 board[i][index].set_number(str(num))
+                show_changes(board[i][index])
                 index += 1
 
     def update_score(self, value) -> None:
         self.score += value
 
-    def on_direction_right(self, board: list[list[Spot]]):
+    def on_direction_right(self, board: list[list[Spot]], show_changes):
         for i in range(self.rows):
             for j in range(self.rows-2, -1, -1):
                 if(board[i][j].is_Empty()):
@@ -107,6 +109,8 @@ class Game2048:
                 while(col < self.rows-1 and board[row][col+1].is_Empty()):
                     board[row][col+1].number = board[row][col].number
                     board[row][col].reset()
+                    show_changes(board[row][col])
+                    show_changes(board[row][col+1])
                     col += 1
                 if(col == 3):
                     continue
@@ -115,8 +119,10 @@ class Game2048:
                                1].number = str(int(board[row][col+1].number) << 1)
                     self.score += int(board[row][col+1].number)
                     board[row][col].reset()
+                    show_changes(board[row][col])
+                    show_changes(board[row][col+1])
 
-    def on_direction_up(self, board: list[list[Spot]]) -> None:
+    def on_direction_up(self, board: list[list[Spot]], show_changes) -> None:
         for i in range(1, self.rows):
             for j in range(self.rows):
                 if(board[i][j].is_Empty()):
@@ -126,15 +132,22 @@ class Game2048:
                 while(row > 0 and board[row-1][col].is_Empty()):
                     board[row-1][col].number = board[row][col].number
                     board[row][col].reset()
+                    show_changes(board[row][col])
+                    show_changes(board[row-1][col])
                     row -= 1
-
                 if(board[row][col].number != None and board[row-1][col].number == board[row][col].number):
                     board[row -
                           1][col].number = str(int(board[row-1][col].number) << 1)
                     self.score += int(board[row-1][col].number)
                     board[row][col].reset()
+                    show_changes(board[row][col])
+                    show_changes(board[row-1][col])
 
-    def on_direction_down(self, board: list[list[Spot]]):
+    def show_animation(self, i: int, j: int, prev_board, board, show_changes):
+        if(prev_board[i][j] != board[i][j]):
+            show_changes(board[i][j])
+
+    def on_direction_down(self, board: list[list[Spot]], show_changes):
         for i in range(self.rows-2, -1, -1):
             for j in range(self.rows):
                 if(board[i][j].is_Empty()):
@@ -144,6 +157,8 @@ class Game2048:
                 while(row < self.rows-1 and board[row+1][col].is_Empty()):
                     board[row+1][col].number = board[row][col].number
                     board[row][col].reset()
+                    show_changes(board[row][col])
+                    show_changes(board[row+1][col])
                     row += 1
                 if(row == 3):
                     continue
@@ -152,6 +167,8 @@ class Game2048:
                           1][col].number = str(int(board[row+1][col].number) << 1)
                     self.score += int(board[row+1][col].number)
                     board[row][col].reset()
+                    show_changes(board[row][col])
+                    show_changes(board[row+1][col])
 
     def make_random_move(self, board: list[list[Spot]]) -> None:
         num: int = self.generate_number()

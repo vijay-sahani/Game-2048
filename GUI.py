@@ -44,7 +44,7 @@ def get_clicked_pos(pos, ROWS, width, height) -> tuple[int]:
     return None
 
 
-def make_grid(ROWS, width, height) -> list[list:Spot]:
+def build_board(ROWS, width, height) -> list[list:Spot]:
     grid = []
     gap1 = width // ROWS
     gap2 = height//ROWS
@@ -67,7 +67,7 @@ def show_score(screen, score: str, width, height):
     screen.blit(score_text, score_text.get_rect(center=pos.center))
 
 
-def draw_grid(screen, ROWS, width, height):
+def draw_board_lines(screen, ROWS, width, height):
     gap1 = width // ROWS
     gap2 = height//ROWS
     for i in range(ROWS):
@@ -76,6 +76,24 @@ def draw_grid(screen, ROWS, width, height):
         for j in range(ROWS):
             pygame.draw.line(screen, GREY, (j*gap1, 0),
                              (j*gap1, height), 3)
+
+
+def draw_changes(screen, rows, width, height, spot: Spot):
+    TILE1 = width // rows
+    TILE2 = height // rows
+    num = font_helper(spot.number, TILE2 if spot.number != None and len(
+        spot.number) < 3 else TILE2-(TILE2*40)//100, (0, 0, 0))
+    x, y = get_clicked_pos((spot.x, spot.y), ROWS, width, height)
+    pos = pygame.Rect(x * TILE1+1, y *
+                      TILE2 + 1, TILE1, TILE2)
+    if(COLORS.get(spot.number)):
+        spot.set_color(COLORS.get(spot.number))
+    screen.fill(spot.color, (x * TILE1+1, y *
+                             TILE2 + 1, TILE1, TILE2))
+    screen.blit(num, num.get_rect(center=pos.center))
+    draw_board_lines(screen, ROWS,  width, height)
+    pygame.display.update()
+    pygame.time.delay(60)
 
 
 def draw(screen, grid: list[list:Spot], ROWS, width, height):
@@ -97,7 +115,7 @@ def draw(screen, grid: list[list:Spot], ROWS, width, height):
             screen.fill(spot.color, (x * TILE1+1, y *
                                      TILE2 + 1, TILE1, TILE2))
             screen.blit(num, num.get_rect(center=pos.center))
-    draw_grid(screen, ROWS,  width, height)
+    draw_board_lines(screen, ROWS,  width, height)
 
 
 def get_square_under_mouse(board, width, height):
@@ -113,7 +131,7 @@ def get_square_under_mouse(board, width, height):
     return None, None, None
 
 
-def update_make_grid(board: list[list[Spot]], width, height):
+def update_board_size(board: list[list[Spot]], width, height):
     gap1 = width // ROWS
     gap2 = height//ROWS
     for i in range(ROWS):
@@ -122,7 +140,7 @@ def update_make_grid(board: list[list[Spot]], width, height):
 
 
 def main(screen, width, height):
-    grid: list[list:Spot] = make_grid(ROWS, width, height)
+    grid: list[list:Spot] = build_board(ROWS, width, height)
     clock = pygame.time.Clock()
     run = True
     selected_pos = None
@@ -145,7 +163,7 @@ def main(screen, width, height):
                 height = event.h-EXTRA_HEIGHT
                 TILE1 = width // ROWS
                 TILE2 = height // ROWS
-                update_make_grid(grid, width, height)
+                update_board_size(grid, width, height)
             if event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()
                 temp = selected_pos
@@ -161,7 +179,8 @@ def main(screen, width, height):
                 pos = pygame.mouse.get_pos()
                 current_pos = get_clicked_pos(pos, ROWS, width, height)
                 if(current_pos != None and selected_pos != current_pos):
-                    game_util.update_board(grid, selected_pos, current_pos)
+                    game_util.update_board(
+                        grid, selected_pos, current_pos, lambda spot: draw_changes(screen, ROWS, width, height, spot))
                     selected_pos = None
         if x != None and selected_pos != None:
             rect = (x * TILE1,
