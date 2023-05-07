@@ -96,7 +96,7 @@ def draw_changes(screen, rows, width, height, spot: Spot):
     screen.blit(num, num.get_rect(center=pos.center))
     draw_board_lines(screen, rows,  width, height)
     pygame.display.update()
-    pygame.time.delay(80*(10-rows)//10)  # reducing speed of delay by rows*10%
+    pygame.time.delay(100*(10-rows)//10)  # reducing speed of delay by rows*10%
 
 
 def draw(screen, grid: list[list:Spot], rows, width, height):

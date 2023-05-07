@@ -2,8 +2,15 @@ import random
 import math
 from Spot import Spot
 
+# Constants
 MOVE_DIRECTIONS = {tuple([1, 0]): 'D', tuple(
     [-1, 0]): 'U', tuple([0, 1]): 'R', tuple([0, -1]): 'L'}
+LEFT = 1
+RIGHT = -1
+UP = 1
+DOWN = -1
+HORIZONTAL = "horizontal"
+VERTICAL = "vertical"
 
 
 class Game2048:
@@ -51,123 +58,54 @@ class Game2048:
         direction = MOVE_DIRECTIONS.get(move_direction)
         if (direction != None):
             if (direction == 'R'):
-                self.on_direction_left_v2(board, show_changes)
+                self.make_move(board, show_changes, HORIZONTAL, LEFT)
             elif (direction == 'L'):
-                self.on_direction_right(board, show_changes)
+                self.make_move(board, show_changes, HORIZONTAL, RIGHT)
             elif (direction == 'D'):
-                self.on_direction_up(board, show_changes)
+                self.make_move(board, show_changes, VERTICAL, UP)
             elif (direction == 'U'):
-                self.on_direction_down(board, show_changes)
+                self.make_move(board, show_changes, VERTICAL, DOWN)
             self.make_random_move(board)
 
-    # Causing double merge issue
-    @DeprecationWarning
-    def on_direction_left(self, board: list[list[Spot]], show_changes):
+    def make_move(self, board: list[list[Spot]], show_changes, scroll_direction, direction):
         for i in range(self.rows):
-            for j in range(1, self.rows):
-                if (board[i][j].is_Empty()):
-                    continue
-                row: int = i
-                col: int = j
-                while (col > 0 and board[row][col-1].is_Empty()):
-                    board[row][col-1].number = board[row][col].number
-                    board[row][col].reset()
-                    col -= 1
-
-                if (board[row][col].number != None and board[row][col-1].number == board[row][col].number):
-                    board[row][col -
-                               1].number = str(int(board[row][col-1].number) << 1)
-                    self.score += int(board[row][col-1].number)
-                    board[row][col].reset()
-
-    def on_direction_left_v2(self, board: list[list[Spot]], show_changes):
-        for i in range(self.rows):
-            stack: list = []
+            array_deque: list = []
             for j in range(self.rows-1, -1, -1):
-                if (board[i][j].is_Empty()):
-                    continue
-                stack.append(int(board[i][j].number))
-                board[i][j].reset()
-                show_changes(board[i][j])
-            index = 0
-            while stack and index < self.rows:
-                num: int = stack.pop()
-                if (stack and stack[len(stack)-1] == num):
-                    num = (stack.pop() << 1)
-                    self.update_score(num)
-                board[i][index].set_number(str(num))
-                show_changes(board[i][index])
-                index += 1
+                # if (move_direction == VERTICAL and not self.feasible(board, j, True, False)):
+                #     break
+                if (scroll_direction == HORIZONTAL):
+                    if (board[i][j].is_Empty()):
+                        continue
+                    array_deque.append(int(board[i][j].number))
+                    board[i][j].reset()
+                    show_changes(board[i][j])
+                else:
+                    if (board[j][i].is_Empty()):
+                        continue
+                    array_deque.append(int(board[j][i].number))
+                    board[j][i].reset()
+                    show_changes(board[j][i])
+            self.merge(board, show_changes, i, array_deque,
+                       scroll_direction, direction)
+
+    def merge(self, board: list[list[Spot]], show_changes, row: int, array_deque: list, scroll_direction, direction):
+        start = 0 if direction == LEFT else self.rows-1
+        while array_deque:
+            num: int = array_deque.pop() if direction == LEFT else array_deque.pop(0)
+            if (array_deque and array_deque[len(array_deque)-1 if direction == LEFT else 0] == num):
+                array_deque.pop() if direction == LEFT else array_deque.pop(0)
+                num = (num << 1)
+                self.update_score(num)
+            if (scroll_direction == HORIZONTAL):
+                board[row][start].set_number(str(num))
+                show_changes(board[row][start])
+            else:
+                board[start][row].set_number(str(num))
+                show_changes(board[start][row])
+            start = abs(start+direction)
 
     def update_score(self, value) -> None:
         self.score += value
-
-    def on_direction_right(self, board: list[list[Spot]], show_changes):
-        for i in range(self.rows):
-            for j in range(self.rows-2, -1, -1):
-                if (board[i][j].is_Empty()):
-                    continue
-                row: int = i
-                col: int = j
-                while (col < self.rows-1 and board[row][col+1].is_Empty()):
-                    board[row][col+1].number = board[row][col].number
-                    board[row][col].reset()
-                    show_changes(board[row][col])
-                    show_changes(board[row][col+1])
-                    col += 1
-                if (col == self.rows-1):
-                    continue
-                if (board[row][col].number != None and board[row][col+1].number == board[row][col].number):
-                    board[row][col +
-                               1].number = str(int(board[row][col+1].number) << 1)
-                    self.score += int(board[row][col+1].number)
-                    board[row][col].reset()
-                    show_changes(board[row][col])
-                    show_changes(board[row][col+1])
-
-    def on_direction_up(self, board: list[list[Spot]], show_changes) -> None:
-        for i in range(1, self.rows):
-            for j in range(self.rows):
-                if (board[i][j].is_Empty()):
-                    continue
-                row: int = i
-                col: int = j
-                while (row > 0 and board[row-1][col].is_Empty()):
-                    board[row-1][col].number = board[row][col].number
-                    board[row][col].reset()
-                    show_changes(board[row][col])
-                    show_changes(board[row-1][col])
-                    row -= 1
-                if (board[row][col].number != None and board[row-1][col].number == board[row][col].number):
-                    board[row -
-                          1][col].number = str(int(board[row-1][col].number) << 1)
-                    self.score += int(board[row-1][col].number)
-                    board[row][col].reset()
-                    show_changes(board[row][col])
-                    show_changes(board[row-1][col])
-
-    def on_direction_down(self, board: list[list[Spot]], show_changes):
-        for i in range(self.rows-2, -1, -1):
-            for j in range(self.rows):
-                if (board[i][j].is_Empty()):
-                    continue
-                row: int = i
-                col: int = j
-                while (row < self.rows-1 and board[row+1][col].is_Empty()):
-                    board[row+1][col].number = board[row][col].number
-                    board[row][col].reset()
-                    show_changes(board[row][col])
-                    show_changes(board[row+1][col])
-                    row += 1
-                if (row == self.rows-1):
-                    continue
-                if (board[row][col].number != None and board[row][col].number == board[row+1][col].number):
-                    board[row +
-                          1][col].number = str(int(board[row+1][col].number) << 1)
-                    self.score += int(board[row+1][col].number)
-                    board[row][col].reset()
-                    show_changes(board[row][col])
-                    show_changes(board[row+1][col])
 
     def make_random_move(self, board: list[list[Spot]]) -> None:
         num: int = self.generate_number()
@@ -187,6 +125,16 @@ class Game2048:
             bool: false if not possible moves can be made 
         """
         return self.find_feasible(board)
+
+    def feasible(self, board: list[list[Spot]], row, check_row: bool, check_col: bool) -> bool:
+        for col in range(self.rows):
+            if (check_row and row > 0 and row < len(board)):
+                if (board[row-1][col].is_Empty() or board[row][col].is_Empty() or board[row-1][col].number == board[row][col].number or board[row+1][col].number == board[row][col].number):
+                    return True
+            if (check_col and col > 0 and col < len(board[row])):
+                if (board[row][col - 1].number == board[row][col].number or board[row][col + 1].number == board[row][col].number):
+                    return True
+        return False
 
     def find_feasible(self, board: list[list[Spot]]):
         for row in range(len(board)):
