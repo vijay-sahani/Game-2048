@@ -1,3 +1,4 @@
+import sys
 import pygame
 from Spot import Spot
 from main import Game2048
@@ -14,10 +15,12 @@ ROWS = 4
 TILE_SIZE = WIDTH//ROWS
 
 fnt = pygame.font.SysFont("comiscans", TILE_SIZE)
+clock = pygame.time.Clock()
 
+# Colors
 WHITE = (255, 255, 255)
 GREY = (128, 128, 128)
-# GREY = (0, 0, 0)
+BLACK = (0, 0, 0)
 COLORS = {
     '2': (238, 228, 218),
     '4': (237, 224, 200),
@@ -33,25 +36,25 @@ COLORS = {
 }
 
 
-def get_clicked_pos(pos, ROWS, width, height) -> tuple[int]:
-    gap1 = width // ROWS
-    gap2 = height//ROWS
+def get_clicked_pos(pos, rows, width, height) -> tuple[int]:
+    gap1 = width // rows
+    gap2 = height//rows
     x, y = pos
     row = x // gap1
     col = y // gap2
-    if col < 4 and col >= 0 and row < 4 and row >= 0:
+    if col < rows and col >= 0 and row < rows and row >= 0:
         return row, col
     return None
 
 
-def build_board(ROWS, width, height) -> list[list:Spot]:
+def build_board(rows, width, height) -> list[list:Spot]:
     grid = []
-    gap1 = width // ROWS
-    gap2 = height//ROWS
-    for i in range(ROWS):
+    gap1 = width // rows
+    gap2 = height//rows
+    for i in range(rows):
         grid.append([])
-        for j in range(ROWS):
-            spot = Spot(i, j, gap1, gap2, ROWS)
+        for j in range(rows):
+            spot = Spot(i, j, gap1, gap2, rows)
             grid[i].append(spot)
     return grid
 
@@ -67,13 +70,13 @@ def show_score(screen, score: str, width, height):
     screen.blit(score_text, score_text.get_rect(center=pos.center))
 
 
-def draw_board_lines(screen, ROWS, width, height):
-    gap1 = width // ROWS
-    gap2 = height//ROWS
-    for i in range(ROWS):
+def draw_board_lines(screen, rows, width, height):
+    gap1 = width // rows
+    gap2 = height//rows
+    for i in range(rows):
         pygame.draw.line(screen, GREY, (0, i*gap2),
                          (width, i*gap2), 3)
-        for j in range(ROWS):
+        for j in range(rows):
             pygame.draw.line(screen, GREY, (j*gap1, 0),
                              (j*gap1, height), 3)
 
@@ -83,22 +86,22 @@ def draw_changes(screen, rows, width, height, spot: Spot):
     TILE2 = height // rows
     num = font_helper(spot.number, TILE2 if spot.number != None and len(
         spot.number) < 3 else TILE2-(TILE2*40)//100, (0, 0, 0))
-    x, y = get_clicked_pos((spot.x, spot.y), ROWS, width, height)
+    x, y = get_clicked_pos((spot.x, spot.y), rows, width, height)
     pos = pygame.Rect(x * TILE1+1, y *
                       TILE2 + 1, TILE1, TILE2)
-    if(COLORS.get(spot.number)):
+    if (COLORS.get(spot.number)):
         spot.set_color(COLORS.get(spot.number))
     screen.fill(spot.color, (x * TILE1+1, y *
                              TILE2 + 1, TILE1, TILE2))
     screen.blit(num, num.get_rect(center=pos.center))
-    draw_board_lines(screen, ROWS,  width, height)
+    draw_board_lines(screen, rows,  width, height)
     pygame.display.update()
-    pygame.time.delay(60)
+    pygame.time.delay(80*(10-rows)//10)  # reducing speed of delay by rows*10%
 
 
-def draw(screen, grid: list[list:Spot], ROWS, width, height):
-    TILE1 = width // ROWS
-    TILE2 = height // ROWS
+def draw(screen, grid: list[list:Spot], rows, width, height):
+    TILE1 = width // rows
+    TILE2 = height // rows
     screen.fill(WHITE)
     for row in grid:
         for spot in row:
@@ -107,20 +110,20 @@ def draw(screen, grid: list[list:Spot], ROWS, width, height):
             # so the font size is reduced by 40% to fit inside the tile size
             num = font_helper(spot.number, TILE2 if spot.number != None and len(
                 spot.number) < 3 else TILE2-(TILE2*40)//100, (0, 0, 0))
-            x, y = get_clicked_pos((spot.x, spot.y), ROWS, width, height)
+            x, y = get_clicked_pos((spot.x, spot.y), rows, width, height)
             pos = pygame.Rect(x * TILE1+1, y *
                               TILE2 + 1, TILE1, TILE2)
-            if(COLORS.get(spot.number)):
+            if (COLORS.get(spot.number)):
                 spot.set_color(COLORS.get(spot.number))
             screen.fill(spot.color, (x * TILE1+1, y *
                                      TILE2 + 1, TILE1, TILE2))
             screen.blit(num, num.get_rect(center=pos.center))
-    draw_board_lines(screen, ROWS,  width, height)
+    draw_board_lines(screen, rows,  width, height)
 
 
-def get_square_under_mouse(board, width, height):
-    TILE1 = width // ROWS
-    TILE2 = height // ROWS
+def get_square_under_mouse(board, rows, width, height):
+    TILE1 = width // rows
+    TILE2 = height // rows
     mouse_pos = pygame.Vector2(pygame.mouse.get_pos())
     x, y = [int(mouse_pos[0]//TILE1), int(mouse_pos[1]//TILE2)]
     try:
@@ -131,56 +134,56 @@ def get_square_under_mouse(board, width, height):
     return None, None, None
 
 
-def update_board_size(board: list[list[Spot]], width, height):
-    gap1 = width // ROWS
-    gap2 = height//ROWS
-    for i in range(ROWS):
-        for j in range(ROWS):
+def update_board_size(board: list[list[Spot]], rows, width, height):
+    gap1 = width // rows
+    gap2 = height//rows
+    for i in range(rows):
+        for j in range(rows):
             board[i][j].update_height_width(gap1, gap2)
 
 
-def main(screen, width, height):
-    grid: list[list:Spot] = build_board(ROWS, width, height)
-    clock = pygame.time.Clock()
+def main(screen, rows, width, height):
+    grid: list[list:Spot] = build_board(rows, width, height)
     run = True
     selected_pos = None
-    game_util = Game2048()
+    game_util = Game2048(rows)
     game_util.make_random_move(grid)
-    TILE1 = width // ROWS
-    TILE2 = height // ROWS
+    TILE1 = width // rows
+    TILE2 = height // rows
     while run:
-        draw(screen, grid, ROWS, width, height)
-        piece, x, y = get_square_under_mouse(grid, width, height)
+        draw(screen, grid, rows, width, height)
+
+        piece, x, y = get_square_under_mouse(grid, rows, width, height)
         for event in pygame.event.get():
             if event.type == pygame.QUIT or game_util.game_over(grid):
                 run = False
                 print("Game over")
-                break
+
             if event.type == pygame.VIDEORESIZE:
                 screen = pygame.display.set_mode(
                     (event.w, event.h), pygame.RESIZABLE)
                 width = event.w
                 height = event.h-EXTRA_HEIGHT
-                TILE1 = width // ROWS
-                TILE2 = height // ROWS
-                update_board_size(grid, width, height)
+                TILE1 = width // rows
+                TILE2 = height // rows
+                update_board_size(grid, rows, width, height)
             if event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()
                 temp = selected_pos
-                selected_pos = get_clicked_pos(pos, ROWS, width, height)
+                selected_pos = get_clicked_pos(pos, rows, width, height)
                 try:
                     spot: Spot = grid[selected_pos[0]][selected_pos[1]]
-                    if(spot.is_Empty() or temp == selected_pos):
+                    if (spot.is_Empty() or temp == selected_pos):
                         selected_pos = None
                 except:
                     pass
 
-            elif(selected_pos and event.type == pygame.MOUSEMOTION):
+            elif (selected_pos and event.type == pygame.MOUSEMOTION):
                 pos = pygame.mouse.get_pos()
-                current_pos = get_clicked_pos(pos, ROWS, width, height)
-                if(current_pos != None and selected_pos != current_pos):
+                current_pos = get_clicked_pos(pos, rows, width, height)
+                if (current_pos != None and selected_pos != current_pos):
                     game_util.update_board(
-                        grid, selected_pos, current_pos, lambda spot: draw_changes(screen, ROWS, width, height, spot))
+                        grid, selected_pos, current_pos, lambda spot: draw_changes(screen, rows, width, height, spot))
                     selected_pos = None
         if x != None and selected_pos != None:
             rect = (x * TILE1,
@@ -189,8 +192,58 @@ def main(screen, width, height):
         show_score(screen, str(game_util.score), width, height)
         pygame.display.flip()
         clock.tick(30)
-    pygame.quit()
+
+
+def draw_text(text, pos, font, color, surface):
+    textobj = font.render(text, 1, color)
+    textrect = textobj.get_rect(center=pos.center)
+    surface.blit(textobj, textrect)
+
+
+def options_menu(screen, width, height):
+    click = False
+    BOX_SIZE = 200
+    font = pygame.font.SysFont(None, BOX_SIZE//2)
+    rows: list = (4, 5, 6, 7)  # Board rows
+    while True:
+        screen.fill(WHITE)
+        draw_board_lines(screen, 4,  width, height+EXTRA_HEIGHT)
+        title = font_helper("Choose board size", EXTRA_HEIGHT, BLACK)
+        screen.blit(title, title.get_rect(center=(width // 2, 50)))
+        mx, my = pygame.mouse.get_pos()
+        offset = 0
+        for row in rows:
+            button = pygame.Rect(
+                width//2-BOX_SIZE//2, 200-BOX_SIZE//2+offset, BOX_SIZE, BOX_SIZE//2)
+            if button.collidepoint((mx, my)):
+                if click:
+                    main(screen, row, width, height)
+            pygame.draw.rect(screen, GREY, button)
+            draw_text(f'{row} x {row}', button,
+                      font, WHITE, screen)
+            offset += BOX_SIZE//2+10
+
+        click = False
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.VIDEORESIZE:
+                screen = pygame.display.set_mode(
+                    (event.w, event.h), pygame.RESIZABLE)
+                width = event.w
+                height = event.h-EXTRA_HEIGHT
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                    sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    click = True
+
+        pygame.display.update()
+        clock.tick(60)
 
 
 if __name__ == "__main__":
-    main(SCREEN, WIDTH, WIDTH)
+    options_menu(SCREEN, WIDTH, WIDTH)
